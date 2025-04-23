@@ -13,6 +13,7 @@ interface IoTConnectProps {
 export function IoTConnect({ onStatusChange, onLevelChange }: IoTConnectProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [internalLevel, setInternalLevel] = useState(60);
 
   const connectToDevice = () => {
     setConnecting(true);
@@ -45,17 +46,17 @@ export function IoTConnect({ onStatusChange, onLevelChange }: IoTConnectProps) {
     if (isConnected) {
       interval = setInterval(() => {
         // Simulate natural bin filling behavior (slowly increasing with some randomness)
-        onLevelChange((prevLevel) => {
-          const increase = Math.random() * 2;
-          return Math.min(100, prevLevel + increase);
-        });
+        const increase = Math.random() * 2;
+        const newLevel = Math.min(100, internalLevel + increase);
+        setInternalLevel(newLevel);
+        onLevelChange(newLevel);
       }, 5000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isConnected, onLevelChange]);
+  }, [isConnected, onLevelChange, internalLevel]);
 
   return (
     <Card className="shadow-md">
