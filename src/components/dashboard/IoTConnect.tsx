@@ -14,23 +14,54 @@ export function IoTConnect({ onStatusChange, onLevelChange }: IoTConnectProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [internalLevel, setInternalLevel] = useState(60);
+  const [wsConnection, setWsConnection] = useState<WebSocket | null>(null);
 
   const connectToDevice = () => {
     setConnecting(true);
     
-    // Simulate connection delay
-    setTimeout(() => {
+    // Create WebSocket connection to your ESP8266
+    const ws = new WebSocket('ws://your-esp8266-ip:81');  // Replace with your ESP8266's IP address
+    
+    ws.onopen = () => {
       setIsConnected(true);
       setConnecting(false);
+      setWsConnection(ws);
       onStatusChange(true);
       toast({
         title: "IoT Device Connected",
         description: "Successfully connected to ultrasonic sensor.",
       });
-    }, 1500);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.binLevel !== undefined) {
+          const newLevel = Math.min(100, Math.max(0, Number(data.binLevel)));
+          setInternalLevel(newLevel);
+          onLevelChange(newLevel);
+        }
+      } catch (error) {
+        console.error('Error parsing sensor data:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to the sensor. Please check your device.",
+        variant: "destructive",
+      });
+      disconnectDevice();
+    };
   };
 
   const disconnectDevice = () => {
+    if (wsConnection) {
+      wsConnection.close();
+      setWsConnection(null);
+    }
     setIsConnected(false);
     onStatusChange(false);
     toast({
@@ -39,24 +70,14 @@ export function IoTConnect({ onStatusChange, onLevelChange }: IoTConnectProps) {
     });
   };
 
-  // Simulate sensor readings when connected
+  // Cleanup WebSocket connection on unmount
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-
-    if (isConnected) {
-      interval = setInterval(() => {
-        // Simulate natural bin filling behavior (slowly increasing with some randomness)
-        const increase = Math.random() * 2;
-        const newLevel = Math.min(100, internalLevel + increase);
-        setInternalLevel(newLevel);
-        onLevelChange(newLevel);
-      }, 5000);
-    }
-
     return () => {
-      if (interval) clearInterval(interval);
+      if (wsConnection) {
+        wsConnection.close();
+      }
     };
-  }, [isConnected, onLevelChange, internalLevel]);
+  }, [wsConnection]);
 
   return (
     <Card className="shadow-md">
