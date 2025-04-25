@@ -1,11 +1,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Accordion } from "@/components/ui/accordion";
 import { useIoTConnection } from "@/hooks/useIoTConnection";
-import { IoTConnectionInfo } from "./IoTConnectionInfo";
-import { IoTArduinoCode } from "./IoTArduinoCode";
-import { IoTConnectInstructions } from "./IoTConnectInstructions";
+
 
 interface IoTConnectProps {
   onStatusChange: (isConnected: boolean) => void;
@@ -31,7 +28,7 @@ export function IoTConnect({ onStatusChange, onLevelChange }: IoTConnectProps) {
               <span>Ultrasonic Sensor</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              {isConnected ? "Connected and sending data" : "Not connected"}
+              {isConnected ? "Connected via USB serial" : "Not connected"}
             </p>
           </div>
           <Button 
@@ -42,12 +39,6 @@ export function IoTConnect({ onStatusChange, onLevelChange }: IoTConnectProps) {
             {connecting ? "Connecting..." : isConnected ? "Disconnect" : "Connect"}
           </Button>
         </div>
-        
-        <Accordion type="single" collapsible>
-          <IoTConnectionInfo />
-          <IoTArduinoCode />
-          <IoTConnectInstructions />
-        </Accordion>
       </CardContent>
     </Card>
   );
